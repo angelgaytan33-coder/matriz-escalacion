@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matriz de Escalación — ServiceNow</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F7F6F2;
+    --surface: #FFFFFF;
+    --surface2: #F0EEE8;
+    --border: rgba(0,0,0,0.09);
+    --border2: rgba(0,0,0,0.15);
+    --text: #1A1916;
+    --text2: #6B6960;
+    --text3: #9B9A94;
+    --accent: #1A1916;
+    --green-bg: #EAF3DE; --green-text: #27500A;
+    --amber-bg: #FAEEDA; --amber-text: #633806;
+    --red-bg: #FAECE7; --red-text: #712B13;
+    --blue-bg: #E6F1FB; --blue-text: #0C447C;
+    --n1-bg: #EAF3DE; --n1-text: #27500A; --n1-border: #97C459;
+    --n2-bg: #FAEEDA; --n2-text: #633806; --n2-border: #EF9F27;
+    --n3-bg: #FAECE7; --n3-text: #712B13; --n3-border: #D85A30;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* HEADER */
+  .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-mark { width: 28px; height: 28px; background: var(--text); border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+  .logo-mark svg { width: 16px; height: 16px; fill: white; }
+  .logo-name { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
+  .logo-sub { font-size: 12px; color: var(--text3); font-family: 'DM Mono', monospace; }
+  .header-right { display: flex; align-items: center; gap: 8px; }
+  .nav-btn { font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 6px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border2); cursor: pointer; background: transparent; color: var(--text2); transition: all 0.15s; font-weight: 400; }
+  .nav-btn:hover { background: var(--surface2); color: var(--text); }
+  .nav-btn.primary { background: var(--text); color: white; border-color: var(--text); }
+  .nav-btn.primary:hover { opacity: 0.85; }
+
+  /* LAYOUT */
+  .container { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* MESA */
+  .mesa-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.5rem; gap: 1rem; flex-wrap: wrap; }
+  .mesa-title h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
+  .mesa-title p { font-size: 13px; color: var(--text2); margin-top: 3px; }
+  .stats-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .stat-pill { display: flex; align-items: center; gap: 6px; font-size: 12px; padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface); color: var(--text2); }
+  .stat-pill .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .search-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  .search-input { flex: 1; font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 9px 14px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); outline: none; transition: border 0.15s; }
+  .search-input:focus { border-color: var(--text); }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.25rem; }
+  .chip { font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border2); cursor: pointer; background: transparent; color: var(--text2); transition: all 0.15s; }
+  .chip.active { background: var(--text); color: white; border-color: var(--text); }
+  .chip:hover:not(.active) { background: var(--surface2); }
+
+  /* ESCALATION CARDS */
+  .esc-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 10px; transition: box-shadow 0.15s; }
+  .esc-card:hover { box-shadow: var(--shadow); }
+  .esc-top { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+  .avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; }
+  .av-0 { background: #B5D4F4; color: #0C447C; }
+  .av-1 { background: #CECBF6; color: #3C3489; }
+  .av-2 { background: #9FE1CB; color: #085041; }
+  .av-3 { background: #F5C4B3; color: #712B13; }
+  .av-4 { background: #FAC775; color: #633806; }
+  .esc-top-info { flex: 1; }
+  .esc-name-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .esc-team-name { font-size: 15px; font-weight: 600; color: var(--text); }
+  .esc-area { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .esc-updated { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; white-space: nowrap; }
+  .badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 20px; }
+  .badge-n1 { background: var(--n1-bg); color: var(--n1-text); }
+  .badge-n2 { background: var(--n2-bg); color: var(--n2-text); }
+  .badge-n3 { background: var(--n3-bg); color: var(--n3-text); }
+  .badge-disponible { background: var(--green-bg); color: var(--green-text); }
+  .badge-ocupado { background: var(--amber-bg); color: var(--amber-text); }
+  .badge-ausente { background: var(--red-bg); color: var(--red-text); }
+  .dot-s { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+  .esc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+  .esc-field { display: flex; flex-direction: column; gap: 2px; }
+  .esc-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text3); font-family: 'DM Mono', monospace; }
+  .esc-value { font-size: 13px; color: var(--text); }
+  .esc-value a { color: #185FA5; text-decoration: none; }
+  .esc-value a:hover { text-decoration: underline; }
+  .esc-notes { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text2); line-height: 1.6; }
+  .tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 3px; }
+  .tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; background: var(--surface2); color: var(--text2); border: 1px solid var(--border); font-family: 'DM Mono', monospace; }
+  .empty { text-align: center; padding: 4rem 1rem; }
+  .empty-icon { font-size: 32px; margin-bottom: 10px; }
+  .empty h3 { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+  .empty p { font-size: 13px; color: var(--text2); }
+  .refresh-btn { font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 5px 12px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; color: var(--text2); transition: all 0.15s; }
+  .refresh-btn:hover { background: var(--surface2); }
+
+  /* LOGIN */
+  .auth-wrap { max-width: 400px; margin: 3rem auto; }
+  .auth-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 2rem; }
+  .auth-title { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+  .auth-sub { font-size: 13px; color: var(--text2); margin-bottom: 1.5rem; }
+  .field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+  .field label { font-size: 12px; color: var(--text2); font-weight: 500; }
+  .field input, .field select, .field textarea { font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text); background: var(--bg); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 9px 12px; width: 100%; outline: none; transition: border 0.15s; }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--text); background: var(--surface); }
+  .field textarea { resize: vertical; min-height: 70px; }
+  .btn { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 9px 18px; border-radius: var(--radius-sm); cursor: pointer; border: 1px solid var(--border2); transition: all 0.15s; }
+  .btn-dark { background: var(--text); color: white; border-color: var(--text); width: 100%; }
+  .btn-dark:hover { opacity: 0.85; }
+  .btn-ghost { background: transparent; color: var(--text2); }
+  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+  .btn-link { background: none; border: none; color: #185FA5; font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; padding: 0; text-decoration: underline; }
+  .auth-toggle { text-align: center; margin-top: 14px; font-size: 13px; color: var(--text2); }
+  .msg { font-size: 13px; padding: 9px 13px; border-radius: var(--radius-sm); margin-bottom: 12px; }
+  .msg-ok { background: var(--green-bg); color: var(--green-text); }
+  .msg-err { background: var(--red-bg); color: var(--red-text); }
+
+  /* EDITOR */
+  .editor-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px; }
+  .editor-title { font-size: 20px; font-weight: 600; }
+  .editor-sub { font-size: 12px; color: var(--text2); margin-top: 2px; font-family: 'DM Mono', monospace; }
+  .section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text3); font-family: 'DM Mono', monospace; font-weight: 500; margin: 1.5rem 0 8px; }
+  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 0; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .field-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+  .field-full { grid-column: 1 / -1; }
+  .nivel-btns { display: flex; gap: 6px; margin-top: 2px; }
+  .nivel-btn { font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border2); cursor: pointer; background: transparent; color: var(--text2); transition: all 0.15s; }
+  .nivel-btn.sel-1 { background: var(--n1-bg); color: var(--n1-text); border-color: var(--n1-border); font-weight: 500; }
+  .nivel-btn.sel-2 { background: var(--n2-bg); color: var(--n2-text); border-color: var(--n2-border); font-weight: 500; }
+  .nivel-btn.sel-3 { background: var(--n3-bg); color: var(--n3-text); border-color: var(--n3-border); font-weight: 500; }
+  .dias-grid { display: flex; gap: 5px; margin-top: 4px; flex-wrap: wrap; }
+  .dia-btn { font-family: 'DM Mono', monospace; font-size: 11px; padding: 5px 10px; border-radius: 4px; border: 1px solid var(--border2); cursor: pointer; background: transparent; color: var(--text2); transition: all 0.15s; }
+  .dia-btn.on { background: var(--text); color: white; border-color: var(--text); }
+  .save-bar { position: sticky; bottom: 0; background: var(--bg); border-top: 1px solid var(--border); padding: 12px 1.5rem; margin: 1.5rem -1.5rem -2rem; display: flex; gap: 8px; align-items: center; }
+  .save-status { font-size: 12px; color: var(--text2); flex: 1; }
+  .loading { display: flex; align-items: center; justify-content: center; padding: 3rem; color: var(--text2); font-size: 13px; gap: 8px; }
+  .spinner { width: 16px; height: 16px; border: 2px solid var(--border2); border-top-color: var(--text); border-radius: 50%; animation: spin 0.6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (max-width: 600px) {
+    .field-row, .field-row.triple { grid-template-columns: 1fr; }
+    .esc-grid { grid-template-columns: 1fr 1fr; }
+    .container { padding: 1.25rem 1rem; }
+    .header { padding: 0 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 16 16"><path d="M2 2h5v5H2zM9 2h5v5H9zM2 9h5v5H2zM9 9h5v5H9z"/></svg>
+    </div>
+    <div>
+      <div class="logo-name">Matriz de Escalación</div>
+      <div class="logo-sub">ServiceNow · Equipos resolutores</div>
+    </div>
+  </div>
+  <div class="header-right" id="header-right">
+    <button class="nav-btn" onclick="goTo('mesa')">Mesa de servicio</button>
+    <button class="nav-btn primary" onclick="goTo('login')">Portal líderes</button>
+  </div>
+</div>
+
+<!-- MESA DE SERVICIO -->
+<div id="page-mesa" class="page active">
+  <div class="container">
+    <div class="mesa-top">
+      <div class="mesa-title">
+        <h1>Directorio de escalación</h1>
+        <p id="mesa-timestamp">Cargando información...</p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="refresh-btn" onclick="loadMesa()">↻ Actualizar</button>
+      </div>
+    </div>
+    <div id="stats-row" class="stats-row" style="margin-bottom:1rem"></div>
+    <div class="search-row">
+      <input class="search-input" id="search" type="text" placeholder="Buscar equipo, líder, área o categoría de SN..." oninput="renderMesa()">
+    </div>
+    <div class="chips" id="filter-chips">
+      <button class="chip active" data-f="all" onclick="setChip(this,'all')">Todos</button>
+      <button class="chip" data-f="disponible" onclick="setChip(this,'disponible')">Disponible</button>
+      <button class="chip" data-f="ocupado" onclick="setChip(this,'ocupado')">Ocupado</button>
+      <button class="chip" data-f="ausente" onclick="setChip(this,'ausente')">Ausente</button>
+      <button class="chip" data-f="n1" onclick="setChip(this,'n1')">N1 — Soporte</button>
+      <button class="chip" data-f="n2" onclick="setChip(this,'n2')">N2 — Especialista</button>
+      <button class="chip" data-f="n3" onclick="setChip(this,'n3')">N3 — Experto</button>
+    </div>
+    <div id="mesa-list"><div class="loading"><div class="spinner"></div>Cargando equipos...</div></div>
+  </div>
+</div>
+
+<!-- LOGIN / REGISTRO -->
+<div id="page-login" class="page">
+  <div class="container">
+    <div class="auth-wrap">
+      <div id="login-panel">
+        <div class="auth-card">
+          <div class="auth-title">Portal de líderes</div>
+          <div class="auth-sub">Accede para actualizar tu información de contacto y disponibilidad</div>
+          <div class="field"><label>ID del equipo</label><input type="text" id="l-id" placeholder="ej. INFRA-001" style="text-transform:uppercase"></div>
+          <div class="field"><label>Contraseña</label><input type="password" id="l-pass" placeholder="••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+          <div id="l-msg"></div>
+          <button class="btn btn-dark" onclick="doLogin()">Ingresar</button>
+        </div>
+        <div class="auth-toggle">¿Equipo nuevo? <button class="btn-link" onclick="showPanel('register')">Registrar equipo</button></div>
+      </div>
+
+      <div id="register-panel" style="display:none">
+        <div class="auth-card">
+          <div class="auth-title">Registrar equipo</div>
+          <div class="auth-sub">Crea el acceso para tu equipo resolutor</div>
+          <div class="field-row" style="margin-bottom:12px">
+            <div class="field" style="margin:0"><label>ID del equipo</label><input type="text" id="r-id" placeholder="INFRA-001" style="text-transform:uppercase"></div>
+            <div class="field" style="margin:0"><label>Contraseña</label><input type="password" id="r-pass" placeholder="••••••"></div>
+          </div>
+          <div class="field"><label>Nombre del equipo</label><input type="text" id="r-name" placeholder="Infraestructura y Redes"></div>
+          <div class="field"><label>Área / Torre</label><input type="text" id="r-area" placeholder="Operaciones TI"></div>
+          <div id="r-msg"></div>
+          <button class="btn btn-dark" onclick="doRegister()">Crear equipo</button>
+        </div>
+        <div class="auth-toggle"><button class="btn-link" onclick="showPanel('login')">Ya tengo acceso</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDITOR LÍDER -->
+<div id="page-editor" class="page">
+  <div class="container">
+    <div class="editor-header">
+      <div>
+        <div class="editor-title" id="ed-title">Mi equipo</div>
+        <div class="editor-sub" id="ed-sub">Sesión activa</div>
+      </div>
+      <button class="btn btn-ghost" onclick="doLogout()">Cerrar sesión</button>
+    </div>
+
+    <div id="ed-msg"></div>
+
+    <div class="section-label">Información del equipo</div>
+    <div class="form-card">
+      <div class="field-row" style="margin-bottom:10px">
+        <div class="field" style="margin:0"><label>Nombre del equipo</label><input type="text" id="e-tname" placeholder="Infraestructura"></div>
+        <div class="field" style="margin:0"><label>Área / Torre</label><input type="text" id="e-area" placeholder="Operaciones TI"></div>
+      </div>
+      <div class="field" style="margin:0">
+        <label>Nivel de escalación</label>
+        <div class="nivel-btns">
+          <button class="nivel-btn" data-n="1" onclick="setNivel(1)">N1 — Soporte</button>
+          <button class="nivel-btn" data-n="2" onclick="setNivel(2)">N2 — Especialista</button>
+          <button class="nivel-btn" data-n="3" onclick="setNivel(3)">N3 — Experto</button>
+        </div>
+        <input type="hidden" id="e-nivel" value="1">
+      </div>
+    </div>
+
+    <div class="section-label">Líder de guardia</div>
+    <div class="form-card">
+      <div class="field-row" style="margin-bottom:10px">
+        <div class="field" style="margin:0"><label>Nombre completo</label><input type="text" id="e-lname" placeholder="Ana García"></div>
+        <div class="field" style="margin:0"><label>Estado actual</label>
+          <select id="e-status">
+            <option value="disponible">✓ Disponible</option>
+            <option value="ocupado">~ Ocupado</option>
+            <option value="ausente">✗ Ausente</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row" style="margin-bottom:10px">
+        <div class="field" style="margin:0"><label>Teléfono</label><input type="text" id="e-phone" placeholder="+52 81 1234 5678"></div>
+        <div class="field" style="margin:0"><label>Extensión</label><input type="text" id="e-ext" placeholder="1234"></div>
+      </div>
+      <div class="field-row">
+        <div class="field" style="margin:0"><label>Correo electrónico</label><input type="email" id="e-email" placeholder="lider@empresa.com"></div>
+        <div class="field" style="margin:0"><label>Teams / Slack / Chat</label><input type="text" id="e-chat" placeholder="@ana.garcia"></div>
+      </div>
+    </div>
+
+    <div class="section-label">Contacto de respaldo</div>
+    <div class="form-card">
+      <div class="field-row" style="margin-bottom:10px">
+        <div class="field" style="margin:0"><label>Nombre</label><input type="text" id="e-bname" placeholder="Carlos López"></div>
+        <div class="field" style="margin:0"><label>Teléfono</label><input type="text" id="e-bphone" placeholder="+52 81 9876 5432"></div>
+      </div>
+      <div class="field-row">
+        <div class="field" style="margin:0"><label>Correo</label><input type="email" id="e-bemail" placeholder="backup@empresa.com"></div>
+        <div class="field" style="margin:0"><label>Teams / Slack</label><input type="text" id="e-bchat" placeholder="@carlos.lopez"></div>
+      </div>
+    </div>
+
+    <div class="section-label">SLA y cobertura</div>
+    <div class="form-card">
+      <div class="field-row triple" style="margin-bottom:10px">
+        <div class="field" style="margin:0"><label>Tiempo de respuesta</label>
+          <select id="e-sla">
+            <option value="15 min">15 minutos</option>
+            <option value="30 min">30 minutos</option>
+            <option value="1 hora" selected>1 hora</option>
+            <option value="2 horas">2 horas</option>
+            <option value="4 horas">4 horas</option>
+            <option value="8 horas">8 horas</option>
+            <option value="24 horas">24 horas</option>
+          </select>
+        </div>
+        <div class="field" style="margin:0"><label>Hora inicio</label><input type="time" id="e-start" value="08:00"></div>
+        <div class="field" style="margin:0"><label>Hora fin</label><input type="time" id="e-end" value="18:00"></div>
+      </div>
+      <div class="field" style="margin:0">
+        <label>Días de cobertura</label>
+        <div class="dias-grid">
+          <button class="dia-btn on" data-d="Lun" onclick="toggleDia(this)">Lun</button>
+          <button class="dia-btn on" data-d="Mar" onclick="toggleDia(this)">Mar</button>
+          <button class="dia-btn on" data-d="Mié" onclick="toggleDia(this)">Mié</button>
+          <button class="dia-btn on" data-d="Jue" onclick="toggleDia(this)">Jue</button>
+          <button class="dia-btn on" data-d="Vie" onclick="toggleDia(this)">Vie</button>
+          <button class="dia-btn" data-d="Sáb" onclick="toggleDia(this)">Sáb</button>
+          <button class="dia-btn" data-d="Dom" onclick="toggleDia(this)">Dom</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label">Notas y categorías de ServiceNow</div>
+    <div class="form-card">
+      <div class="field" style="margin-bottom:10px"><label>Instrucciones de escalación</label>
+        <textarea id="e-notes" placeholder="Ej: Para incidentes P1 llamar directo. Para P2/P3 abrir ticket en SN con asignación al grupo..."></textarea>
+      </div>
+      <div class="field" style="margin:0"><label>Categorías de ServiceNow que atiende (separadas por coma)</label>
+        <input type="text" id="e-cats" placeholder="Network, Storage, Firewall, VPN, Active Directory">
+      </div>
+    </div>
+
+    <div class="save-bar">
+      <div class="save-status" id="save-status"></div>
+      <button class="btn" onclick="doLogout()" style="color:var(--text2)">Salir</button>
+      <button class="btn btn-dark" onclick="saveData()" style="width:auto;min-width:140px">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STORAGE usando localStorage (funciona en cualquier hosting) ──
+// Para un equipo, usar Firebase Realtime DB o Supabase para datos compartidos entre usuarios.
+// Esta versión usa localStorage como fallback demo. Para producción real, ver instrucciones al final.
+
+const STORAGE_KEY = 'escalacion_teams_v1';
+const AUTH_KEY = 'escalacion_auth_v1';
+let teams = {};
+let auths = {};
+let currentUser = null;
+let activeFilter = 'all';
+
+function loadStorage() {
+  try { teams = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}'); } catch(e) { teams = {}; }
+  try { auths = JSON.parse(localStorage.getItem(AUTH_KEY)||'{}'); } catch(e) { auths = {}; }
+}
+
+function saveStorage() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(teams));
+  localStorage.setItem(AUTH_KEY, JSON.stringify(auths));
+}
+
+function initials(name) {
+  if(!name) return '?';
+  const p = name.trim().split(' ').filter(Boolean);
+  return ((p[0]||'')[0]+(p[1]||'')[0]||'').toUpperCase() || name[0].toUpperCase();
+}
+
+function avColor(id) {
+  let h = 0; for(const c of (id||'')) h = (h*31+c.charCodeAt(0))&0xffff;
+  return h % 5;
+}
+
+function timeSince(ts) {
+  if(!ts) return 'nunca';
+  const diff = Date.now()-ts;
+  if(diff < 60000) return 'hace un momento';
+  if(diff < 3600000) return 'hace '+Math.floor(diff/60000)+' min';
+  if(diff < 86400000) return 'hace '+Math.floor(diff/3600000)+'h';
+  return new Date(ts).toLocaleDateString('es-MX',{day:'2-digit',month:'short'});
+}
+
+function goTo(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  if(page==='mesa') loadMesa();
+  if(page==='login' && currentUser) page='editor';
+  if(currentUser && page==='login') {
+    document.getElementById('page-editor').classList.add('active');
+    document.getElementById('page-login').classList.remove('active');
+  }
+  updateHeader();
+}
+
+function updateHeader() {
+  const hr = document.getElementById('header-right');
+  if(currentUser) {
+    hr.innerHTML = `<span style="font-size:12px;color:var(--text2);font-family:'DM Mono',monospace">${currentUser}</span>
+    <button class="nav-btn" onclick="goTo('mesa')">Mesa de servicio</button>
+    <button class="nav-btn primary" onclick="goTo('editor')">Mi equipo</button>`;
+  } else {
+    hr.innerHTML = `<button class="nav-btn" onclick="goTo('mesa')">Mesa de servicio</button>
+    <button class="nav-btn primary" onclick="goTo('login')">Portal líderes</button>`;
+  }
+}
+
+function loadMesa() {
+  loadStorage();
+  const list = Object.values(teams);
+  const now = new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('mesa-timestamp').textContent = 'Actualizado a las ' + now + ' · ' + list.length + ' equipo'+(list.length!==1?'s':'') + ' registrado'+(list.length!==1?'s':'');
+  const disp = list.filter(t=>t.status==='disponible').length;
+  const ocup = list.filter(t=>t.status==='ocupado').length;
+  const ause = list.filter(t=>t.status==='ausente').length;
+  document.getElementById('stats-row').innerHTML =
+    `<div class="stat-pill"><span class="dot" style="background:#639922"></span>${disp} disponible${disp!==1?'s':''}</div>
+     <div class="stat-pill"><span class="dot" style="background:#BA7517"></span>${ocup} ocupado${ocup!==1?'s':''}</div>
+     <div class="stat-pill"><span class="dot" style="background:#993C1D"></span>${ause} ausente${ause!==1?'s':''}</div>`;
+  renderMesa();
+}
+
+function renderMesa() {
+  const q = (document.getElementById('search').value||'').toLowerCase();
+  let list = Object.values(teams).filter(t => {
+    const text = [t.teamName,t.area,t.liderName,t.backupName,t.categories].join(' ').toLowerCase();
+    const matchQ = !q || text.includes(q);
+    let matchF = true;
+    if(activeFilter==='disponible') matchF = t.status==='disponible';
+    else if(activeFilter==='ocupado') matchF = t.status==='ocupado';
+    else if(activeFilter==='ausente') matchF = t.status==='ausente';
+    else if(activeFilter==='n1') matchF = String(t.nivel)==='1';
+    else if(activeFilter==='n2') matchF = String(t.nivel)==='2';
+    else if(activeFilter==='n3') matchF = String(t.nivel)==='3';
+    return matchQ && matchF;
+  });
+  list.sort((a,b)=>Number(a.nivel||1)-Number(b.nivel||1));
+  const el = document.getElementById('mesa-list');
+  if(!list.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">◫</div><h3>${q||activeFilter!=='all'?'Sin resultados':'Sin equipos registrados'}</h3>
+    <p>${q||activeFilter!=='all'?'Intenta con otro término o filtro.':'Los líderes deben registrar su equipo en el portal.'}</p></div>`;
+    return;
+  }
+  el.innerHTML = list.map(t => {
+    const cats = (t.categories||'').split(',').map(c=>c.trim()).filter(Boolean).map(c=>`<span class="tag">${c}</span>`).join('');
+    const dias = (t.dias||[]).join(' · ');
+    const statusColors = {disponible:'#639922',ocupado:'#BA7517',ausente:'#993C1D'};
+    const statusLabels = {disponible:'Disponible',ocupado:'Ocupado',ausente:'Ausente'};
+    const nLabel = {1:'N1 Soporte',2:'N2 Especialista',3:'N3 Experto'};
+    return `<div class="esc-card">
+      <div class="esc-top">
+        <div class="avatar av-${avColor(t.id)}">${initials(t.liderName||t.teamName)}</div>
+        <div class="esc-top-info">
+          <div class="esc-name-row">
+            <span class="esc-team-name">${t.teamName||t.id}</span>
+            <span class="badge badge-n${t.nivel||1}">${nLabel[t.nivel||1]}</span>
+            <span class="badge badge-${t.status||'disponible'}"><span class="dot-s" style="background:${statusColors[t.status||'disponible']}"></span>${statusLabels[t.status||'disponible']}</span>
+          </div>
+          <div class="esc-area">${t.area||''}</div>
+        </div>
+        <div class="esc-updated">${timeSince(t.updatedAt)}</div>
+      </div>
+      <div class="esc-grid">
+        <div class="esc-field"><div class="esc-label">Líder de guardia</div><div class="esc-value">${t.liderName||'—'}</div></div>
+        <div class="esc-field"><div class="esc-label">Teléfono</div><div class="esc-value"><a href="tel:${(t.phone||'').replace(/\s/g,'')}">${t.phone||'—'}</a>${t.ext?' ext. '+t.ext:''}</div></div>
+        <div class="esc-field"><div class="esc-label">Correo</div><div class="esc-value"><a href="mailto:${t.email||''}">${t.email||'—'}</a></div></div>
+        <div class="esc-field"><div class="esc-label">Teams / Slack</div><div class="esc-value">${t.chat||'—'}</div></div>
+        <div class="esc-field"><div class="esc-label">Respaldo</div><div class="esc-value">${t.backupName||'—'}${t.backupPhone?' · '+t.backupPhone:''}</div></div>
+        <div class="esc-field"><div class="esc-label">SLA respuesta</div><div class="esc-value">${t.sla||'—'}</div></div>
+        <div class="esc-field"><div class="esc-label">Horario</div><div class="esc-value">${t.startTime||'?'}–${t.endTime||'?'} | ${dias||'—'}</div></div>
+        <div class="esc-field"><div class="esc-label">Categorías ServiceNow</div><div class="esc-value">${cats||'<span style="color:var(--text3)">—</span>'}</div></div>
+      </div>
+      ${t.notes?`<div class="esc-notes"><strong>Instrucciones:</strong> ${t.notes}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function setChip(el, f) {
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  activeFilter = f;
+  renderMesa();
+}
+
+function showPanel(p) {
+  document.getElementById('login-panel').style.display = p==='login'?'':'none';
+  document.getElementById('register-panel').style.display = p==='register'?'':'none';
+}
+
+function doLogin() {
+  loadStorage();
+  const id = document.getElementById('l-id').value.trim().toUpperCase();
+  const pass = document.getElementById('l-pass').value;
+  const msg = document.getElementById('l-msg');
+  if(!id||!pass) { msg.innerHTML='<div class="msg msg-err">Completa todos los campos.</div>'; return; }
+  if(!auths[id]) { msg.innerHTML='<div class="msg msg-err">Equipo no encontrado. ¿Necesitas registrarte?</div>'; return; }
+  if(auths[id].pass !== btoa(unescape(encodeURIComponent(pass)))) { msg.innerHTML='<div class="msg msg-err">Contraseña incorrecta.</div>'; return; }
+  currentUser = id;
+  loadEditor();
+  goTo('editor');
+}
+
+function doRegister() {
+  loadStorage();
+  const id = document.getElementById('r-id').value.trim().toUpperCase();
+  const pass = document.getElementById('r-pass').value;
+  const name = document.getElementById('r-name').value.trim();
+  const area = document.getElementById('r-area').value.trim();
+  const msg = document.getElementById('r-msg');
+  if(!id||!pass||!name) { msg.innerHTML='<div class="msg msg-err">Completa los campos obligatorios.</div>'; return; }
+  if(auths[id]) { msg.innerHTML='<div class="msg msg-err">Ese ID ya existe. Usa otro o inicia sesión.</div>'; return; }
+  auths[id] = { pass: btoa(unescape(encodeURIComponent(pass))) };
+  teams[id] = { id, teamName:name, area, nivel:1, status:'disponible', liderName:'', phone:'', ext:'', email:'', chat:'', backupName:'', backupPhone:'', backupEmail:'', backupChat:'', sla:'1 hora', startTime:'08:00', endTime:'18:00', dias:['Lun','Mar','Mié','Jue','Vie'], notes:'', categories:'', updatedAt: Date.now() };
+  saveStorage();
+  currentUser = id;
+  loadEditor();
+  goTo('editor');
+}
+
+function doLogout() {
+  currentUser = null;
+  updateHeader();
+  goTo('mesa');
+}
+
+function loadEditor() {
+  if(!currentUser || !teams[currentUser]) return;
+  const d = teams[currentUser];
+  document.getElementById('ed-title').textContent = d.teamName || currentUser;
+  document.getElementById('ed-sub').textContent = currentUser + ' · sesión activa';
+  document.getElementById('e-tname').value = d.teamName||'';
+  document.getElementById('e-area').value = d.area||'';
+  document.getElementById('e-nivel').value = d.nivel||1;
+  document.getElementById('e-lname').value = d.liderName||'';
+  document.getElementById('e-status').value = d.status||'disponible';
+  document.getElementById('e-phone').value = d.phone||'';
+  document.getElementById('e-ext').value = d.ext||'';
+  document.getElementById('e-email').value = d.email||'';
+  document.getElementById('e-chat').value = d.chat||'';
+  document.getElementById('e-bname').value = d.backupName||'';
+  document.getElementById('e-bphone').value = d.backupPhone||'';
+  document.getElementById('e-bemail').value = d.backupEmail||'';
+  document.getElementById('e-bchat').value = d.backupChat||'';
+  document.getElementById('e-sla').value = d.sla||'1 hora';
+  document.getElementById('e-start').value = d.startTime||'08:00';
+  document.getElementById('e-end').value = d.endTime||'18:00';
+  document.getElementById('e-notes').value = d.notes||'';
+  document.getElementById('e-cats').value = d.categories||'';
+  setNivel(d.nivel||1, false);
+  const dias = d.dias||[];
+  document.querySelectorAll('.dia-btn').forEach(b => b.classList.toggle('on', dias.includes(b.dataset.d)));
+  updateHeader();
+}
+
+function setNivel(n, save=true) {
+  document.getElementById('e-nivel').value = n;
+  document.querySelectorAll('.nivel-btn').forEach(b => {
+    b.className = 'nivel-btn';
+    if(Number(b.dataset.n)===n) b.className = 'nivel-btn sel-'+n;
+  });
+}
+
+function toggleDia(btn) { btn.classList.toggle('on'); }
+
+function saveData() {
+  if(!currentUser) return;
+  loadStorage();
+  const dias = Array.from(document.querySelectorAll('.dia-btn.on')).map(b=>b.dataset.d);
+  teams[currentUser] = {
+    ...teams[currentUser],
+    teamName: document.getElementById('e-tname').value.trim(),
+    area: document.getElementById('e-area').value.trim(),
+    nivel: Number(document.getElementById('e-nivel').value)||1,
+    liderName: document.getElementById('e-lname').value.trim(),
+    status: document.getElementById('e-status').value,
+    phone: document.getElementById('e-phone').value.trim(),
+    ext: document.getElementById('e-ext').value.trim(),
+    email: document.getElementById('e-email').value.trim(),
+    chat: document.getElementById('e-chat').value.trim(),
+    backupName: document.getElementById('e-bname').value.trim(),
+    backupPhone: document.getElementById('e-bphone').value.trim(),
+    backupEmail: document.getElementById('e-bemail').value.trim(),
+    backupChat: document.getElementById('e-bchat').value.trim(),
+    sla: document.getElementById('e-sla').value,
+    startTime: document.getElementById('e-start').value,
+    endTime: document.getElementById('e-end').value,
+    dias,
+    notes: document.getElementById('e-notes').value.trim(),
+    categories: document.getElementById('e-cats').value.trim(),
+    updatedAt: Date.now()
+  };
+  saveStorage();
+  document.getElementById('ed-title').textContent = teams[currentUser].teamName || currentUser;
+  const ss = document.getElementById('save-status');
+  ss.innerHTML = '<span style="color:var(--green-text)">✓ Guardado correctamente</span>';
+  setTimeout(()=>{ ss.textContent=''; }, 3000);
+}
+
+loadStorage();
+loadMesa();
+</script>
+
+<!-- ══════════════════════════════════════════════════════════
+     INSTRUCCIONES PARA DATOS COMPARTIDOS ENTRE USUARIOS
+     ══════════════════════════════════════════════════════════
+     Esta versión usa localStorage (datos por navegador).
+     Para que TODOS los usuarios vean la misma información:
+
+     OPCIÓN A — Google Firebase (gratuito, 5 min de setup):
+     1. firebase.google.com → crear proyecto → Realtime Database
+     2. Reemplazar las funciones loadStorage/saveStorage con
+        llamadas a firebase.database().ref('teams').set/get
+
+     OPCIÓN B — Supabase (gratuito, PostgreSQL):
+     1. supabase.com → crear proyecto → tabla "teams"
+     2. Usar su API REST o client JS para leer/escribir
+
+     OPCIÓN C — Servidor SharePoint/intranet propio:
+     Subir este archivo a tu servidor y conectar a tu BD interna.
+     ══════════════════════════════════════════════════════════ -->
+
+</body>
+</html>
